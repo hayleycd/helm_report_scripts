@@ -6,6 +6,11 @@ MY_CHARTS = scraping.return_data(
     "https://github.com/helm/charts/tree/master/stable", 
     "js-navigation-open"
     )[1:]
+WORKING_DIRECTORY = "/Users/hayley/mycode/scraping/charts/"
+OUTPUT_DIRECTORY = "/Users/hayley/mycode/scraping/charts/output_files/"
+
+def npm_start(chart_directory, output_file):
+    return f"npm start -- {chart_directory} --output={output_file}"
 
 def helm_fetch_cmd(chart):
     return f"helm fetch stable/{chart}"
@@ -44,27 +49,30 @@ def get_tgz():
     output = subprocess.Popen( "ls", stdout=subprocess.PIPE).communicate()[0].decode("utf-8")
     return output.split("\n")
 
-def mk_dirs(chart):
-    command = create_dir_for_chart_cmd(chart)
-    print(command)
-    os.system(command)
+def paths_for_snyk_helm():
+    return [(WORKING_DIRECTORY + chart, 
+            OUTPUT_DIRECTORY + chart + ".json",
+            chart) for chart in MY_CHARTS]
 
-def move_for_tar(tgz):
-    command = mv_file(tgz)
-    print(command)
-    os.system(command)
+def run_snyk_helm():
+    paths = paths_for_snyk_helm()
+    import pdb; pdb.set_trace()
+    os.system("npm install")
+    for each in paths:
+        print(each[0], each[1])
+        os.system(npm_start(each[0], each[1]))
 
 def tar_file(tgz):
     command = tar_cmd(tgz)
     print(command)
     os.system(command)
 
-def organize_and_tar(tgzs):
+def tar(tgzs):
     for tgz in tgzs:
-        directory_name = tgz[:-4]
-        mk_dirs(directory_name)
-        move_for_tar(tgz)
-        os.system(cd_in(directory_name))
         tar_file(tgz)
-        os.system(template())
-        os.system(cd_out())
+
+def template_yaml(charts):
+    for chart in charts:
+        cd_in(chart)
+        template()
+        cd_out()
